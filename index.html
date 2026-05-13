@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Getty Images Dashboard — Jan–May 2026</title>
+  <style>
+    :root {
+      --bg:#080808; --bg2:#111111; --bg3:#181818; --bg4:#222222;
+      --border:#282828; --border2:#1e1e1e;
+      --text:#f0f0f0; --text2:#ffffff; --muted:#666; --muted2:#888;
+      --accent:#c41654; --teal:#1a787a; --amber:#e8921a;
+      --violet:#903290; --green:#1b9a6a; --blue:#2563a8;
+      --edit:#c41654; --crea:#1a787a;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
+    h1,h2,h3,h4,p{margin:0}
+
+    .main-header{background:linear-gradient(135deg,#1a1a1a,#080808);border-bottom:3px solid var(--accent);padding:18px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+    .header-left{display:flex;align-items:center;gap:14px}
+    .logo-badge{background:var(--accent);color:#fff;font-weight:800;font-size:13px;padding:6px 12px;border-radius:6px;letter-spacing:.5px}
+    .header-title h1{font-size:clamp(20px,3vw,34px);letter-spacing:-0.03em}
+    .header-title p{color:var(--muted);font-size:13px;margin-top:4px}
+    .header-badge{background:var(--bg2);color:var(--amber);font-size:12px;font-weight:600;padding:6px 12px;border-radius:20px;border:1px solid #e8921a44}
+
+    .legend-bar{display:flex;align-items:center;gap:20px;padding:10px 32px;background:var(--bg2);border-bottom:1px solid var(--border);flex-wrap:wrap}
+    .leg-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted2);font-weight:600}
+    .leg-dot{width:12px;height:12px;border-radius:3px}
+
+    .main-tabs{background:var(--bg);border-bottom:2px solid var(--border);padding:0 32px;display:flex;gap:0;overflow-x:auto}
+    .main-tab-btn{padding:14px 22px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;margin-bottom:-2px;transition:.15s;white-space:nowrap}
+    .main-tab-btn:hover{color:#aaa}
+    .main-tab-btn.active{color:#f0f0f0}
+    .main-tab-btn[data-tab="overview"].active{border-bottom-color:var(--accent);color:#f08098}
+    .main-tab-btn[data-tab="jan"].active{border-bottom-color:var(--blue);color:#80aae0}
+    .main-tab-btn[data-tab="feb"].active{border-bottom-color:var(--teal);color:#80c4c6}
+    .main-tab-btn[data-tab="mar"].active{border-bottom-color:var(--green);color:#80d4b0}
+    .main-tab-btn[data-tab="apr"].active{border-bottom-color:var(--amber);color:#f4c880}
+    .main-tab-btn[data-tab="may"].active{border-bottom-color:var(--violet);color:#c890c8}
+    .main-tab-btn[data-tab="compare"].active{border-bottom-color:#fff;color:#fff}
+
+    .section{display:none} .section.active{display:block}
+    main{max-width:1440px;margin:0 auto;padding-bottom:40px}
+    .container{padding:24px 32px 0}
+
+    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:22px}
+    .kpi-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px 18px 14px;position:relative;overflow:hidden}
+    .kpi-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px}
+    .kpi-card.accent::before{background:var(--accent)} .kpi-card.teal::before{background:var(--teal)}
+    .kpi-card.amber::before{background:var(--amber)} .kpi-card.violet::before{background:var(--violet)}
+    .kpi-card.green::before{background:var(--green)} .kpi-card.blue::before{background:var(--blue)}
+    .kpi-card.edit::before{background:var(--edit)} .kpi-card.crea::before{background:var(--crea)}
+    .kpi-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+    .kpi-value{font-size:clamp(22px,2.8vw,34px);font-weight:700;letter-spacing:-0.03em;color:var(--text2)}
+    .kpi-sub{font-size:12px;color:var(--muted2);margin-top:4px}
+    .kpi-badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;margin-top:6px}
+    .badge-down{background:rgba(196,22,84,.2);color:#ff6090}
+    .badge-flat{background:rgba(100,100,100,.2);color:#999}
+
+    .section-title{font-size:12px;font-weight:700;letter-spacing:.5px;color:var(--muted2);text-transform:uppercase;margin:0 0 14px}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px}
+    @media(max-width:900px){.two-col{grid-template-columns:1fr}}
+
+    .chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px}
+    .chart-card h3{font-size:14px;font-weight:700;color:var(--text2);margin-bottom:3px}
+    .chart-card p{font-size:12px;color:var(--muted);margin-bottom:14px}
+    canvas{display:block;width:100%}
+
+    /* ── insight box ── */
+    .insight-box{background:var(--bg3);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:10px;padding:14px 18px;margin-bottom:14px;font-size:13px;color:#ccc;line-height:1.7}
+    .insight-box strong{color:var(--text2)}
+    .insight-box .ins-row{display:flex;gap:8px;align-items:baseline;margin-top:4px}
+    .ins-label{font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;min-width:80px}
+
+    /* ── user table ── */
+    .user-table-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    thead th{text-align:left;padding:8px 10px;font-size:11px;font-weight:700;letter-spacing:.6px;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border)}
+    thead th.th-edit{color:#f08098} thead th.th-crea{color:#60d4d6}
+    tbody tr{border-bottom:1px solid var(--border2);transition:background .1s}
+    tbody tr:hover{background:var(--bg3)}
+    tbody td{padding:9px 10px;color:var(--text)}
+    .rank-num{color:var(--muted);font-size:12px;font-weight:600}
+    .bar-bg{background:var(--bg4);border-radius:3px;height:6px}
+    .bar-fill{height:6px;border-radius:3px}
+    .pill{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px}
+    .pill-edit{background:rgba(196,22,84,.2);color:#f08098}
+    .pill-crea{background:rgba(26,120,122,.2);color:#60d4d6}
+    .edit-pct{font-size:10px;color:var(--muted);margin-left:2px}
+
+    .mom-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-bottom:24px}
+    .mom-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:22px}
+    .mom-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+    .mom-months{font-size:17px;font-weight:700;color:var(--text2);margin-bottom:14px}
+    .mom-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:13px}
+    .mom-metric{color:var(--muted2)}
+    .mom-delta{font-size:22px;font-weight:800}
+    .delta-neg{color:#ff6090}
+    .prog-track{background:var(--bg4);border-radius:4px;height:10px;position:relative;overflow:hidden;margin:10px 0 4px}
+    .prog-prev{height:10px;background:var(--muted);opacity:.3;position:absolute;top:0;left:0}
+    .prog-curr{height:10px;border-radius:4px;position:absolute;top:0;left:0}
+    .prog-label{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:2px}
+    .divider{border:none;border-top:1px solid var(--border);margin:14px 0}
+    .tag-partial{display:inline-block;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;vertical-align:middle;background:rgba(232,146,26,.2);color:var(--amber);letter-spacing:.4px;margin-left:6px}
+
+    ::-webkit-scrollbar{width:6px;height:6px}
+    ::-webkit-scrollbar-track{background:var(--bg)}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+  </style>
+</head>
+<body>
+
+<div class="main-header">
+  <div class="header-left">
+    <div class="logo-badge">GETTY</div>
+    <div class="header-title">
+      <h1>Getty Images Dashboard</h1>
+      <p>Download Report — January to May 2026 · PA FLX Editorial</p>
+    </div>
+  </div>
+  <div class="header-badge">Generated May 2026</div>
+</div>
+
+<div class="legend-bar">
+  <div class="leg-item"><div class="leg-dot" style="background:#c41654"></div>Editorial</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#1a787a"></div>Creative</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#2563a8"></div>Video</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#e8921a"></div>Photos</div>
+  <div clas="leg-item"><div class="leg-dot" style="background:#903290"></div>I[llustrations</div>
+  <div class="leg-item" style="margin-left:auto;font-size:11px;color:var(--muted)">Daily = แท่งซ้อน Edit+Crea · Media Type = แท่งคู่ E/C</div>
+</div>
+
+<div class="main-tabs">
+  <button class="main-tab-btn active" data-tab="overview">Overview</button>
+  <button class="main-tab-btn" data-tab="jan">January</button>
+  <button class="main-tab-btn" data-tab="feb">February</button>
+  <button class="main-tab-btn" data-tab="mar">March</button>
+  <button class="main-tab-btn" data-tab="apr">April</button>
+  <button class="main-tab-btn" data-tab="may">May <span class="tag-partial">YTD</span></button>
+  <button class="main-tab-btn" data-tab="compare">MoM Comparison</button>
+</div>
+
+<main>
+
+<!-- ──────── OVERVIEW ──────── -->
+<div class="section active" id="tab-overview">
+<div class="container">
+  <div style="height:22px"></div>
+  <p class="section-title">5-Month Summary</p>
+  <div class="kpi-grid" style="grid-template-columns:repeat(5,1fr)">
+    <div class="kpi-card blue"><div class="kpi-label">January</div><div class="kpi-value">2,364</div><div class="kpi-sub">Edit 1,158 · Crea 1,203</div></div>
+    <div class="kpi-card teal"><div class="kpi-label">February</div><div class="kpi-value">2,349</div><div class="kpi-sub">Edit 1,282 · Crea 1,062</div><span class="kpi-badge badge-flat">−15 (−0.6%)</span></div>
+    <div class="kpi-card green"><div class="kpi-label">March</div><div class="kpi-value">1,893</div><div class="kpi-sub">Edit 1,025 · Crea 859</div><span class="kpi-badge badge-down">−456 (−19.4%)</span></div>
+    <div class="kpi-card amber"><div class="kpi-label">April</div><div class="kpi-value">1,287</div><div class="kpi-sub">Edit 733 · Crea 550</div><span class="kpi-badge badge-down">−606 (−32.0%)</span></div>
+    <div class="kpi-card violet"><div class="kpi-label">May <span class="tag-partial">YTD</span></div><div class="kpi-value">736</div><div class="kpi-sub">Edit 387 · Crea 348</div></div>
+  </div>
+  <div class="two-col">
+    <div class="chart-card"><h3>Total Downloads by Month</h3><p>แยก Editorial (แดง) vs. Creative (เขียว)</p><canvas id="chartOverviewGrouped" height="250"></canvas></div>
+    <div class="chart-card"><h3>Editorial vs. Creative — Ratio %</h3><p>สัดส่วน % ของแต่ละเดือน</p><canvas id="chartOverviewRatio" height="250"></canvas></div>
+  </div>
+  <div class="two-col">
+    <div class="chart-card"><h3>Average Daily Downloads</h3><p>เฉลี่ยต่อวัน</p><canvas id="chartAvgDaily" height="200"></canvas></div>
+    <div class="chart-card"><h3>Media Type Total (5 months)</h3><p>Video / Photos / Illustrations รวม Jan–May</p><canvas id="chartOverviewType" height="200"></canvas></div>
+  </div>
+  <p class="section-title">All-User Summary (Jan–May)</p>
+  <div class="chart-card" style="margin-bottom:24px">
+    <div class="user-table-wrap"><table>
+      <thead><tr><th>#</th><th>User</th><th style="color:#80aae0">Jan</th><th style="color:#80c4c6">Feb</th><th style="color:#80d4b0">Mar</th><th style="color:#f4c880">Apr</th><th style="color:#c890c8">May*</th><th>Total</th><th style="width:120px">Bar</th></tr></thead>
+      <tbody id="overviewUserTable"></tbody>
+    </table></div>
+  </div>
+</div>
+</div>
+
+<!-- ──────── JANUARY ──────── -->
+<div class="section" id="tab-jan">
+<div class="container">
+  <div style="height:22px"></div><p class="section-title">January 2026</p>
+  <div class="kpi-grid">
+    <div class="kpi-card blue"><div class="kpi-label">Total</div><div class="kpi-value">2,364</div><div class="kpi-sub">Highest month</div></div>
+    <div class="kpi-card edit"><div class="kpi-label">Editorial</div><div class="kpi-value">1,158</div><div class="kpi-sub">49.0%</div></div>
+    <div class="kpi-card crea"><div class="kpi-label">Creative</div><div class="kpi-value">1,203</div><div class="kpi-sub">50.9%</div></div>
+    <div class="kpi-card blue"><div class="kpi-label">Video</div><div class="kpi-value">1,531</div><div class="kpi-sub">64.8%</div></div>
+    <div class="kpi-card amber"><div class="kpi-label">Photos</div><div class="kpi-value">801</div><div class="kpi-sub">33.9%</div></div>
+    <div class="kpi-card green"><div class="kpi-label">Avg/Day</div><div class="kpi-value">76.3</div><div class="kpi-sub">Max 247</div></div>
+  </div>
+  <div class="two-col">
+    <div class="chart-card"><h3>Daily Downloads — January</h3><p>แท่งซ้อน Editorial (แดง) + Creative (เขียว)</p><canvas id="chartJanDaily" height="230"></canvas></div>
+    <div class="chart-card"><h3>Media Type by Category — January</h3><p>Video / Photos / Illustrations แยก E & C</p><canvas id="chartJanType" height="230"></canvas></div>
+  </div>
+  <p class="section-title">Top Users — January</p>
+  <div id="insightJan"></div>
+  <div class="chart-card" style="margin-bottom:24px"><div class="user-table-wrap" id="tableJan"></div></div>
+</div>
+</div>
+
+<!-- ──────── FEBRUARY ──────── -->
+<div class="section" id="tab-feb">
+<div class="container">
+  <div style="height:22px"></div><p class="section-title">February 2026</p>
+  <div class="kpi-grid">
+    <div class="kpi-card teal"><div class="kpi-label">Total</div><div class="kpi-value">2,349</div><div class="kpi-sub">−15 จาก Jan (−0.6%)</div></div>
+    <div class="kpi-card edit"><div class="kpi-label">Editorial</div><div class="kpi-value">1,282</div><div class="kpi-sub">54.6%</div></div>
+    <div class="kpi-card crea"><div class="kpi-label">Creative</div><div class="kpi-value">1,062</div><div class="kpi-sub">45.2%</div></div>
+    <div class="kpi-card blue"><div class="kpi-label">Video</div><div class="kpi-value">1,618</div><div class="kpi-sub">68.9%</div></div>
+    <div class="kpi-card amber"><div class="kpi-label">Photos</div><div class="kpi-value">716</div><div class="kpi-sub">30.5%</div></div>
+    <div class="kpi-card green"><div class="kpi-label">Avg/Day</div><div class="kpi-value">83.9</div><div class="kpi-sub">Max 232</div></div>
+  </div>
+  <div class="two-col">
+    <div class="chart-card"><h3>Daily Downloads — February</h3><p>แท่งซ้อน Editorial + Creative</p><canvas id="chartFebDaily" height="230"></canvas></div>
+    <div class="chart-card"><h3>Media Type by Category — February</h3><p>Video / Photos / Illustrations แยก E & C</p><canvas id="chartFebType" height="230"></canvas></div>
+  </div>
+  <p class="section-title">Top Users — February</p>
+  <div id="insightFeb"></div>
+  <div class="chart-card" style="margin-bottom:24px"><div class="user-table-wrap" id="tableFeb"></div></div>
+</div>
+</div>
+
+<!-- ──────── MARCH ──────── -->
+<div class="section" id="tab-mar">
+<div class="container">
+  <div style="height:22px"></div><p class="section-title">March 2026</p>
+  <div class="kpi-grid">
+    <div class="kpi-card green"><div class="kpi-label">Total</div><div class="kpi-value">1,893</div><div class="kpi-sub">−456 จาก Feb (−19.4%)</div></div>
+    <div class="kpi-card edit"><div class="kpi-label">Editorial</div><div class="kpi-value">1,025</div><div class="kpi-sub">54.1%</div></div>
+    <div class="kpi-card crea"><div class="kpi-label">Creative</div><div class="kpi-value">859</div><div class="kpi-sub">45.4%</div></div>
+    <div class="kpi-card blue"><div class="kpi-label">Video</div><div class="kpi-value">1,279</div><div class="kpi-sub">67.6%</div></div>
+    <div class="kpi-card amber"><div class="kpi-label">Photos</div><div class="kpi-value">610</div><div class="kpi-sub">32.2%</div></div>
+    <div class="kpi-card green"><div class="kpi-label">Avg/Day</div><div class="kpi-value">61.1</div><div class="kpi-sub">Max 189</div></div>
+  </div>
+  <div class="two-col">
+    <div class="chart-card"><h3>Daily Downloads — March</h3><p>แท่งซ้อน Editorial + Creative</p><canvas id="chartMarDaily" height="230"></canvas></div>
+    <div class="chart-card"><h3>Media Type by Category — March</h3><p>Video / Photos / Illustrations แยก E & C</p><canvas id="chartMarType" height="230"></canvas></div>
+  </div>
+  <p class="section-title">Top Users — March</p>
+  <div id="insightMar"></div>
+  <div class="chart-card" style="margin-bottom:24px"><div class="user-table-wrap" id="tableMar"></div></div>
+</div>
+</div>
+
+<!-- ──────── APRIL ──────── -->
+<div class="section" id="tab-apr">
+<div class="container">
+  <div style="height:22px"></div><p class="section-title">April 2026</p>
+  <div class="kpi-grid">
+    <div class="kpi-card amber"><div class="kpi-label">Total</div><div class="kpi-value">1,287</div><div class="kpi-sub">−606 จาก Mar (−32.0%) ⚠️</div></div>
+    <div class="kpi-card edit"><div class="kpi-label">Editorial</div><div class="kpi-value">733</div><div class="kpi-sub">57.0%</div></div>
+    <div class="kpi-card crea"><div class="kpi-label">Creative</div><div class="kpi-value">550</div><div class="kpi-sub">42.7%</div></div>
+    <div class="kpi-card blue"><div class="kpi-label">Video</div><div class="kpi-value">836</div><div class="kpi-sub">65.0%</div></div>
+    <div class="kpi-card amber"><div class="kpi-label">Photos</div><div class="kpi-value">450</div><div class="kpi-sub">35.0%</div></div>
+    <div class="kpi-card green"><div class="kpi-label">Avg/Day</div><div class="kpi-value">42.9</div><div class="kpi-sub">Max 123</div></div>
+  </div>
+  <div class="two-col">
+    <div class="chart-card"><h3>Daily Downloads — April</h3><p>แท่งซ้อน Editorial + Creative</p><canvas id="chartAprDaily" height="230"></canvas></div>
+    <div class="chart-card"><h3>Media Type by Category — April</h3><p>Video / Photos / Illustrations แยก E & C</p><canvas id="chartAprType" height="230"></canvas></div>
+  </div>
+  <p class="section-title">Top Users — April</p>
+  <div id="insightApr"></div>
+  <div class="chart-card" style="margin-bottom:24px"><div class="user-table-wrap" id="tableApr"></div></div>
+</div>
+</div>
+
+<!-- ──────── MAY ──────── -->
+<div class="section" id="tab-may">
+<div class="container">
+  <div style="height:22px"></div><p class="section-title">May 2026 <span class="tag-partial">YTD · 13 DAYS</span></p>
+  <div class="kpi-grid">
+    <div class="kpi-card violet"><div class="kpi-label">Total (YTD)</div><div class="kpi-value">736</div><div class="kpi-sub">13 วันแรก</div></div>
+    <div class="kpi-card edit"><div class="kpi-label">Editorial</div><div class="kpi-value">387</div><div class="kpi-sub">52.6%</div></div>
+    <div class="kpi-card crea"><div class="kpi-label">Creative</div><div class="kpi-value">348</div><div class="kpi-sub">47.3%</div></div>
+    <div class="kpi-card blue"><div class="kpi-label">Video</div><div class="kpi-value">482</div><div class="kpi-sub">65.5%</div></div>
+    <div class="kpi-card amber"><div class="kpi-label">Photos</div><div class="kpi-value">252</div><div class="kpi-sub">34.2%</div></div>
+    <div class="kpi-card green"><div class="kpi-label">Avg/Day</div><div class="kpi-value">56.6</div><div class="kpi-sub">Max 152</div></div>
+  </div>
+  <div class="two-col">
+    <div class="chart-card"><h3>Daily Downloads — May</h3><p>แท่งซ้อน Editorial + Creative (ถึง 13 May)</p><canvas id="chartMayDaily" height="230"></canvas></div>
+    <div class="chart-card"><h3>Media Type by Category — May</h3><p>Video / Photos / Illustrations แยก E & C</p><canvas id="chartMayType" height="230"></canvas></div>
+  </div>
+  <p class="section-title">Top Users — May</p>
+  <div id="insightMay"></div>
+  <div class="chart-card" style="margin-bottom:24px"><div class="user-table-wrap" id="tableMay"></div></div>
+</div>
+</div>
+
+<!-- ──────── COMPARE ──────── -->
+<div class="section" id="tab-compare">
+<div class="container">
+  <div style="height:22px"></div><p class="section-title">Month-over-Month Comparison</p>
+  <div class="mom-grid">
+    <div class="mom-card">
+      <div class="mom-title">January → February</div>
+      <div class="mom-months" style="color:#80c4c6">Jan → Feb</div>
+      <div class="mom-row"><span class="mom-metric">Total</span><span>2,364 → 2,349</span></div>
+      <div class="mom-delta" style="color:#999">−15 <span style="font-size:13px">(−0.6%)</span></div>
+      <div class="prog-track"><div class="prog-prev" style="width:100%"></div><div class="prog-curr" style="width:99.4%;background:var(--teal)"></div></div>
+      <div class="prog-label"><span>Jan 2,364</span><span>Feb 2,349</span></div>
+      <hr class="divider">
+      <div class="mom-row"><span class="mom-metric">Editorial</span><span>1,158 → 1,282 <span style="color:#40d090">+124</span></span></div>
+      <div class="mom-row"><span class="mom-metric">Creative</span><span>1,203 → 1,062 <span style="color:#ff6090">−141</span></span></div>
+      <div class="mom-row"><span class="mom-metric">Video</span><span>1,531 → 1,618 <span style="color:#40d090">+87</span></span></div>
+      <div class="mom-row"><span class="mom-metric">Photos</span><span>801 → 716 <span style="color:#ff6090">−85</span></span></div>
+    </div>
+    <div class="mom-card" style="border-color:#ff6090aa">
+      <div class="mom-title">February → March</div>
+      <div class="mom-months" style="color:#80d4b0">Feb → Mar</div>
+      <div class="mom-row"><span class="mom-metric">Total</span><span>2,349 → 1,893</span></div>
+      <div class="mom-delta delta-neg">−456 <span style="font-size:13px">(−19.4%)</span></div>
+      <div class="prog-track"><div class="prog-prev" style="width:100%"></div><div class="prog-curr" style="width:80.6%;background:var(--green)"></div></div>
+      <div class="prog-label"><span>Feb 2,349</span><span>Mar 1,893</span></div>
+      <hr class="divider">
+      <div class="mom-row"><span class="mom-metric">Editorial</span><span>1,282 → 1,025 <span style="color:#ff6090">−257</span></span></div>
+      <div class="mom-row"><span class="mom-metric">Creative</span><span>1,062 → 859 <span style="color:#ff6090">−203</span></span></div>
+      <div class="mom-row"><span class="mom-metric">Video</span><span>1,618 → 1,279 <span style="color:#ff6090">−339</span></span></div>
+      <div class="mom-row"><span class="mom-metric">Photos</span><span>716 → 610 <span style="color:#ff6090">−106</span></span></div>
+    </div>
+    <div class="mom-card" style="border-color:#ff3060cc">
+      <div class="mom-title">March → April ⚠️ Biggest Drop</div>
+      <div class="mom-months" style="color:#f4c880">Mar → Apr</div>
+      <div class="mom-row"><span class="mom-metric">Total</span><span>1,893 → 1,287</span></div>
+      <div class="mom-delta delta-neg">−606 <span style="font-size:13px">(−32.0%)</span></div>
+      <div class="prog-track"><div class="prog-prev" style="width:100%"></div><div class="prog-curr" style="width:68%;background:var(--amber)"></div></div>
+      <div class="prog-label"><span>Mar 1,893</span><span>Apr 1,287</span></div>
+      <hr class="divider">
+      <div class="mom-row"><span class="mom-metric">Editorial</span><span>1,025 → 733 <span style="color:#ff6090">−292</span></span></div>
+      <div class="mom-row"><span class="mom-metric">Creative</span><span>859 → 550 <span style="color:#ff6090">−309</span></span></div>
+      <div class="mom-row"><span class="mom-metric">Video</span><span>1,279 → 836 <span style="color:#ff6090">−443</span></span></div>
+      <div class="mom-row"><span class="mom-metric">Photos</span><span>610 → 450 <span style="color:#ff6090">−160</span></span></div>
+    </div>
+    <div class="mom-card">
+      <div class="mom-title">April → May (partial 13d)</div>
+      <div class="mom-months" style="color:#c890c8">Apr → May</div>
+      <div class="mom-row"><span class="mom-metric">Total*</span><span>1,287 → 736</span></div>
+      <div class="mom-delta delta-neg">−551* <span style="font-size:12px">(partial)</span></div>
+      <div class="prog-track"><div class="prog-prev" style="width:100%"></div><div class="prog-curr" style="width:57.2%;background:var(--violet)"></div></div>
+      <div class="prog-label"><span>Apr 1,287</span><span>May 736 (13d)</span></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">*May มีข้อมูลเพียง 13 วัน</div>
+      <hr class="divider">
+      <div class="mom-row"><span class="mom-metric">Editorial</span><span>733 → 387</span></div>
+      <div class="mom-row"><span class="mom-metric">Creative</span><span>550 → 348</span></div>
+      <div class="mom-row"><span class="mom-metric">Avg/day</span><span>42.9 → 56.6 <span style="color:#40d090">+13.7</span></span></div>
+    </div>
+  </div>
+  <p class="section-title">Download Trend — Editorial vs. Creative</p>
+  <div class="chart-card" style="margin-bottom:20px">
+    <h3>Monthly Totals — Editorial vs. Creative (Grouped)</h3>
+    <p>เปรียบเทียบการดาวน์โหลดแยก Editorial / Creative ทั้ง 5 เดือน</p>
+    <canvas id="chartCompareGrouped" height="280"></canvas>
+  </div>
+  <p class="section-title">User Shift: Feb→Mar & Mar→Apr</p>
+  <div class="chart-card" style="margin-bottom:24px"><div class="user-table-wrap"><table>
+    <thead><tr><th>User</th><th>Feb</th><th>Mar</th><th>Feb→Mar Δ</th><th>Mar</th><th>Apr</th><th>Mar→Apr Δ</th></tr></thead>
+    <tbody id="compareUserTable"></tbody>
+  </table></div></div>
+</div>
+</div>
+
+</main>
+
+<script>
+const EDIT='#c41654', CREA='#1a787a';
+const MCOL=['#2563a8','#1a787a','#1b9a6a','#e8921a','#903290'];
+const totals=[2364,2349,1893,1287,736];
+const editorial=[1158,1282,1025,733,387];
+const creative =[1203,1062, 859,550,348];
+const avgDay=[76.3,83.9,61.1,42.9,56.6];
+
+const mtEdit=[
+  {Video:519,Photos:639,Illustrations:0},{Video:638,Photos:643,Illustrations:0},
+  {Video:490,Photos:533,Illustrations:0},{Video:312,Photos:421,Illustrations:0},
+  {Video:145,Photos:242,Illustrations:0},
+];
+const mtCrea=[
+  {Video:1012,Photos:159,Illustrations:31},{Video:980,Photos:68,Illustrations:13},
+  {Video:785,Photos:72,Illustrations:2},{Video:521,Photos:28,Illustrations:1},
+  {Video:336,Photos:10,Illustrations:2},
+];
+
+const daily={
+  jan:{edit:{1:9,2:9,3:4,4:6,5:41,6:49,7:47,8:39,9:24,10:19,11:9,12:88,13:66,14:42,15:53,16:48,17:21,18:12,19:50,20:46,21:61,22:15,23:45,24:12,25:18,26:18,27:42,28:62,29:101,30:86,31:16},
+       crea:{1:1,3:3,4:11,5:34,6:12,7:28,8:77,9:23,10:2,11:2,12:43,13:28,14:61,15:70,16:59,17:26,18:24,19:41,20:22,21:72,22:15,23:34,24:3,25:2,26:42,27:153,28:45,29:146,30:95,31:29}},
+  feb:{edit:{1:67,2:46,3:56,4:94,5:39,6:58,7:34,8:1,9:35,10:91,11:85,12:17,13:109,14:29,15:26,16:89,17:46,18:45,19:46,20:44,21:6,22:5,23:43,24:11,25:56,26:49,27:39,28:16},
+       crea:{1:7,2:21,3:72,4:137,5:61,6:55,7:5,9:38,10:76,11:72,12:37,13:65,14:17,15:8,16:83,17:91,18:36,19:14,20:31,23:11,24:25,25:53,26:23,27:24}},
+  mar:{edit:{1:9,2:22,3:7,4:20,5:72,6:28,7:15,8:30,9:23,10:17,11:6,12:23,13:33,14:17,15:63,16:37,17:47,18:55,19:50,20:54,21:6,22:9,23:18,24:30,25:22,26:53,27:26,28:93,29:20,30:50,31:70},
+       crea:{2:7,3:5,4:16,5:31,6:2,7:1,8:4,9:30,10:2,11:3,12:12,13:30,14:16,15:25,16:25,17:100,18:48,19:38,20:56,22:5,23:27,24:40,25:28,26:58,27:18,28:95,29:7,30:24,31:106}},
+  apr:{edit:{1:44,2:44,3:20,4:3,5:3,6:4,7:35,8:19,9:25,10:31,11:14,12:9,13:18,14:20,15:5,16:29,17:31,18:14,19:15,20:43,21:32,22:42,23:16,24:26,25:38,26:16,27:54,28:22,29:38,30:23},
+       crea:{1:57,2:48,3:5,7:2,8:7,9:37,10:7,13:1,16:4,17:7,18:20,19:1,20:15,21:31,22:44,23:53,24:18,25:85,27:42,28:27,29:19,30:20}},
+  may:{edit:{1:14,2:3,3:46,4:15,5:83,6:39,7:28,8:31,9:6,10:6,11:70,12:22,13:24},
+       crea:{1:3,3:53,4:4,5:3,6:20,7:66,8:12,11:82,12:80,13:25}}
+};
+
+// User data with Editorial/Creative breakdown per month
+const userData = {
+  jan:{
+    'Ekapol Bunlue':            {E:362,C:509,T:871},
+    'Karin Wasurushtakon':      {E:460,C:117,T:580},
+    'Pawarisa Tangtulanon':     {E:130,C:180,T:310},
+    'Sanicha Lakornphon':       {E:73, C:228,T:301},
+    'Chonlathorn Jarusuwanvong':{E:44, C:135,T:179},
+    'Kristoffer Svensson':      {E:64, C:4,  T:68},
+    'Aphisit Hansaphiromchok':  {E:4,  C:17, T:21},
+    'Narasit Kaesaprasit (Nat)':{E:5,  C:13, T:18},
+    'Phantawat Settawilai':     {E:16, C:0,  T:16},
+  },
+  feb:{
+    'Ekapol Bunlue':            {E:555,C:434,T:989},
+    'Karin Wasurushtakon':      {E:451,C:56, T:511},
+    'Sanicha Lakornphon':       {E:106,C:269,T:375},
+    'Pawarisa Tangtulanon':     {E:120,C:203,T:323},
+    'Chonlathorn Jarusuwanvong':{E:9,  C:79, T:88},
+    'Kristoffer Svensson':      {E:38, C:0,  T:39},
+    'Narasit Kaesaprasit (Nat)':{E:0,  C:13, T:13},
+    'Phantawat Settawilai':     {E:2,  C:5,  T:7},
+    'Aphisit Hansaphiromchok':  {E:1,  C:3,  T:4},
+  },
+  mar:{
+    'Ekapol Bunlue':            {E:404,C:436,T:844},
+    'Karin Wasurushtakon':      {E:385,C:43, T:431},
+    'Sanicha Lakornphon':       {E:73, C:192,T:265},
+    'Pawarisa Tangtulanon':     {E:95, C:119,T:216},
+    'Chonlathorn Jarusuwanvong':{E:29, C:58, T:87},
+    'Kristoffer Svensson':      {E:27, C:0,  T:27},
+    'Aphisit Hansaphiromchok':  {E:10, C:0,  T:10},
+    'Phantawat Settawilai':     {E:1,  C:9,  T:10},
+    'Narasit Kaesaprasit (Nat)':{E:1,  C:2,  T:3},
+  },
+  apr:{
+    'Ekapol Bunlue':            {E:299,C:442,T:744},
+    'Karin Wasurushtakon':      {E:325,C:23, T:348},
+    'Pawarisa Tangtulanon':     {E:33, C:49, T:82},
+    'Sanicha Lakornphon':       {E:22, C:24, T:47},
+    'Kristoffer Svensson':      {E:45, C:1,  T:46},
+    'Chonlathorn Jarusuwanvong':{E:9,  C:11, T:20},
+  },
+  may:{
+    'Ekapol Bunlue':            {E:164,C:226,T:391},
+    'Karin Wasurushtakon':      {E:171,C:4,  T:175},
+    'Sanicha Lakornphon':       {E:19, C:40, T:59},
+    'Chonlathorn Jarusuwanvong':{E:5,  C:52, T:57},
+    'Aphisit Hansaphiromchok':  {E:3,  C:16, T:19},
+    'Kristoffer Svensson':      {E:18, C:0,  T:18},
+    'Pawarisa Tangtulanon':     {E:7,  C:10, T:17},
+  },
+};
+
+// Summary totals for overview table
+const users={
+  'Ekapol Bunlue':            [871,989,844,744,391],
+  'Karin Wasurushtakon':      [580,511,431,348,175],
+  'Pawarisa Tangtulanon':     [310,323,216, 82, 17],
+  'Sanicha Lakornphon':       [301,375,265, 47, 59],
+  'Chonlathorn Jarusuwanvong':[179, 88, 87, 20, 57],
+  'Kristoffer Svensson':      [ 68, 39, 27, 46, 18],
+  'Aphisit Hansaphiromchok':  [ 21,  4, 10,  0, 19],
+  'Narasit Kaesaprasit (Nat)':[ 18, 13,  3,  0,  0],
+  'Phantawat Settawilai':     [ 16,  7, 10,  0,  0],
+};
+
+const fmt=n=>n.toLocaleString();
+const pct=(a,b)=>b?((a/b)*100).toFixed(0)+'%':'–';
+
+/* ── insight box generator ── */
+function buildInsight(containerId, key, monthName, totalDL, momDelta){
+  const d=userData[key];
+  const sorted=Object.entries(d).sort((a,b)=>b[1].T-a[1].T);
+  const top=sorted[0], second=sorted[1];
+  const topSharePct=((top[1].T/totalDL)*100).toFixed(1);
+  // Dominant category overall
+  const totalE=Object.values(d).reduce((s,v)=>s+v.E,0);
+  const totalC=Object.values(d).reduce((s,v)=>s+v.C,0);
+  const domCat=totalE>totalC?'Editorial':'Creative';
+  const domPct=((Math.max(totalE,totalC)/totalDL)*100).toFixed(1);
+  // Pure editorial users (>=90% editorial)
+  const pureEdit=sorted.filter(([,v])=>v.T>0 && v.E/v.T>=0.9).map(([n])=>n.split(' ')[0]);
+  // Pure creative users
+  const pureCrea=sorted.filter(([,v])=>v.T>0 && v.C/v.T>=0.9).map(([n])=>n.split(' ')[0]);
+
+  let notes=[];
+  if(pureEdit.length) notes.push(`<strong>${pureEdit.join(', ')}</strong> ดาวน์โหลด Editorial เกือบทั้งหมด (≥90%)`);
+  if(pureCrea.length) notes.push(`<strong>${pureCrea.join(', ')}</strong> ดาวน์โหลด Creative เกือบทั้งหมด (≥90%)`);
+  if(momDelta) notes.push(momDelta);
+
+  const el=document.getElementById(containerId);
+  if(!el)return;
+  el.innerHTML=`<div class="insight-box">
+    <div><strong>${monthName}</strong> มีการดาวน์โหลดรวม <strong>${fmt(totalDL)}</strong> ครั้ง
+    โดยสัดส่วนหลักเป็น <strong style="color:${domCat==='Editorial'?'#f08098':'#60d4d6'}">${domCat} (${domPct}%)</strong>
+    · <strong>${top[0].split(' ')[0]}</strong> ดาวน์โหลดมากที่สุด คิดเป็น ${topSharePct}% ของเดือน
+    (E: ${fmt(top[1].E)} · C: ${fmt(top[1].C)})</div>
+    ${notes.length?'<div style="margin-top:8px;color:#aaa">'+notes.map(n=>`• ${n}`).join('<br>')+'</div>':''}
+  </div>`;
+}
+
+/* ── user table with E/C breakdown ── */
+function buildUserTable(tableId, key, mIdx){
+  const d=userData[key];
+  const sorted=Object.entries(d).sort((a,b)=>b[1].T-a[1].T);
+  const mx=sorted[0][1].T;
+  let h=`<table><thead><tr>
+    <th>#</th><th>User</th>
+    <th class="th-edit">Editorial</th><th>E%</th>
+    <th class="th-crea">Creative</th><th>C%</th>
+    <th>Total</th><th style="width:140px">Bar</th>
+  </tr></thead><tbody>`;
+  sorted.forEach(([name,v],i)=>{
+    const bp=Math.round((v.T/mx)*100);
+    const ep=v.T?((v.E/v.T)*100).toFixed(0):0;
+    const cp=v.T?((v.C/v.T)*100).toFixed(0):0;
+    // bar split: editorial left (red) + creative right (teal)
+    const editW=Math.round((v.E/mx)*100);
+    const creaW=Math.round((v.C/mx)*100);
+    h+=`<tr>
+      <td class="rank-num">${i+1}</td>
+      <td><strong>${name}</strong></td>
+      <td><span class="pill pill-edit">${fmt(v.E)}</span></td>
+      <td style="color:var(--muted);font-size:12px">${ep}%</td>
+      <td><span class="pill pill-crea">${fmt(v.C)}</span></td>
+      <td style="color:var(--muted);font-size:12px">${cp}%</td>
+      <td><strong>${fmt(v.T)}</strong></td>
+      <td>
+        <div style="display:flex;height:7px;border-radius:4px;overflow:hidden;background:var(--bg4)">
+          <div style="width:${editW}%;background:${EDIT}cc;min-width:${v.E>0?2:0}px"></div>
+          <div style="width:${creaW}%;background:${CREA}cc;min-width:${v.C>0?2:0}px"></div>
+        </div>
+      </td>
+    </tr>`;
+  });
+  document.getElementById(tableId).innerHTML=h+'</tbody></table>';
+}
+
+/* ── Canvas helpers ── */
+function setup(id,h){
+  const el=document.getElementById(id); if(!el)return null;
+  const dpr=window.devicePixelRatio||1;
+  const w=el.parentElement.clientWidth-36;
+  el.width=w*dpr; el.height=h*dpr; el.style.width=w+'px'; el.style.height=h+'px';
+  const ctx=el.getContext('2d'); ctx.scale(dpr,dpr);
+  ctx.fillStyle='#111'; ctx.fillRect(0,0,w,h);
+  return {ctx,w,h};
+}
+function grid(ctx,pl,pt,cw,ch,mx,n=5){
+  for(let i=0;i<=n;i++){
+    const y=pt+ch-(i/n)*ch;
+    ctx.strokeStyle='#252525'; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(pl,y); ctx.lineTo(pl+cw,y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#555'; ctx.font='11px Segoe UI'; ctx.textAlign='right';
+    ctx.fillText(Math.round((i/n)*mx).toLocaleString(),pl-5,y+4);
+  }
+}
+function legRow(ctx,h,items){
+  const ly=h-10;
+  items.forEach(([c,l],i)=>{
+    const lx=50+i*120;
+    ctx.fillStyle=c; ctx.fillRect(lx,ly-9,10,9);
+    ctx.fillStyle='#888'; ctx.font='10px Segoe UI'; ctx.textAlign='left';
+    ctx.fillText(l,lx+13,ly);
+  });
+}
+
+function drawDailyStacked(id,eObj,cObj){
+  const r=setup(id,230); if(!r)return;
+  const {ctx,w,h}=r;
+  const pl=48,pt=24,pb=38,pr=12,cw=w-pl-pr,ch=h-pt-pb;
+  const days=[...new Set([...Object.keys(eObj),...Object.keys(cObj)].map(Number))].sort((a,b)=>a-b);
+  const mx=Math.max(...days.map(d=>(eObj[d]||0)+(cObj[d]||0)))*1.18;
+  grid(ctx,pl,pt,cw,ch,mx);
+  const n=days.length,bw=(cw/n)*0.72,gap=(cw/n)*0.28,step=Math.ceil(n/11);
+  days.forEach((d,i)=>{
+    const x=pl+i*(cw/n)+gap/2,ev=eObj[d]||0,cv=cObj[d]||0,tot=ev+cv;
+    const totH=(tot/mx)*ch;
+    if(cv>0){const ch2=(cv/mx)*ch;ctx.fillStyle=CREA+'cc';ctx.beginPath();ctx.roundRect(x,pt+ch-ch2,bw,ch2,[2,2,0,0]);ctx.fill();}
+    if(ev>0){const eh=(ev/mx)*ch,cy2=(cv/mx)*ch;ctx.fillStyle=EDIT+'cc';ctx.beginPath();ctx.roundRect(x,pt+ch-cy2-eh,bw,eh,[2,2,0,0]);ctx.fill();}
+    if(tot>0&&totH>16){ctx.fillStyle='#ccc';ctx.font='9px Segoe UI';ctx.textAlign='center';ctx.fillText(tot,x+bw/2,pt+ch-totH-3);}
+    if(i%step===0||i===n-1){ctx.fillStyle='#666';ctx.font='10px Segoe UI';ctx.textAlign='center';ctx.fillText(d,x+bw/2,pt+ch+14);}
+  });
+  legRow(ctx,h,[[EDIT,'Editorial'],[CREA,'Creative']]);
+}
+
+function drawTypeGrouped(id,eData,cData){
+  const r=setup(id,230); if(!r)return;
+  const {ctx,w,h}=r;
+  const pl=48,pt=30,pb=48,pr=100,cw=w-pl-pr,ch=h-pt-pb;
+  const cats=['Video','Photos','Illustrations'];
+  const eV=cats.map(c=>eData[c]||0),cV=cats.map(c=>cData[c]||0);
+  const mx=Math.max(...eV,...cV)*1.18;
+  grid(ctx,pl,pt,cw,ch,mx,4);
+  const gw=cw/cats.length,bw=gw*0.28,ig=gw*0.06,p0=gw*0.12;
+  cats.forEach((cat,i)=>{
+    const gx=pl+i*gw+p0;
+    const ev=eV[i];
+    if(ev>0){const bh=(ev/mx)*ch;ctx.fillStyle=EDIT+'cc';ctx.beginPath();ctx.roundRect(gx,pt+ch-bh,bw,bh,[3,3,0,0]);ctx.fill();ctx.fillStyle='#ddd';ctx.font='10px Segoe UI';ctx.textAlign='center';ctx.fillText(fmt(ev),gx+bw/2,pt+ch-bh-4);}
+    const cv=cV[i];
+    if(cv>0){const bh=(cv/mx)*ch,cx2=gx+bw+ig;ctx.fillStyle=CREA+'cc';ctx.beginPath();ctx.roundRect(cx2,pt+ch-bh,bw,bh,[3,3,0,0]);ctx.fill();ctx.fillStyle='#ddd';ctx.font='10px Segoe UI';ctx.textAlign='center';ctx.fillText(fmt(cv),cx2+bw/2,pt+ch-bh-4);}
+    const TCOLS=['#2563a8','#e8921a','#903290'];
+    ctx.fillStyle=TCOLS[i];ctx.font='bold 11px Segoe UI';ctx.textAlign='center';ctx.fillText(cat,gx+bw+ig/2,pt+ch+14);
+    ctx.fillStyle='#666';ctx.font='9px Segoe UI';ctx.fillText('E',gx+bw/2,pt+ch+26);ctx.fillText('C',gx+bw+ig+bw/2,pt+ch+26);
+  });
+  const lx=w-pr+10;[[EDIT,'Editorial'],[CREA,'Creative']].forEach(([c,l],i)=>{ctx.fillStyle=c;ctx.fillRect(lx,28+i*22,12,12);ctx.fillStyle='#999';ctx.font='11px Segoe UI';ctx.textAlign='left';ctx.fillText(l,lx+16,38+i*22);});
+}
+
+function drawOverviewGrouped(id,h2){
+  const r=setup(id,h2); if(!r)return;
+  const {ctx,w,h}=r;
+  const pl=50,pt=32,pb=46,pr=12,cw=w-pl-pr,ch=h-pt-pb;
+  const mx=Math.max(...totals)*1.15,labels=['Jan','Feb','Mar','Apr','May*'];
+  grid(ctx,pl,pt,cw,ch,mx,5);
+  const gw=cw/5,bw=gw*0.32,ig=gw*0.04,p0=gw*0.08;
+  totals.forEach((tot,i)=>{
+    const gx=pl+i*gw+p0;
+    let bh=(editorial[i]/mx)*ch;ctx.fillStyle=EDIT+'cc';ctx.beginPath();ctx.roundRect(gx,pt+ch-bh,bw,bh,[3,3,0,0]);ctx.fill();ctx.fillStyle='#eee';ctx.font='10px Segoe UI';ctx.textAlign='center';ctx.fillText(fmt(editorial[i]),gx+bw/2,pt+ch-bh-4);
+    bh=(creative[i]/mx)*ch;const cx2=gx+bw+ig;ctx.fillStyle=CREA+'cc';ctx.beginPath();ctx.roundRect(cx2,pt+ch-bh,bw,bh,[3,3,0,0]);ctx.fill();ctx.fillStyle='#eee';ctx.font='10px Segoe UI';ctx.textAlign='center';ctx.fillText(fmt(creative[i]),cx2+bw/2,pt+ch-bh-4);
+    const midX=gx+bw+ig/2;ctx.fillStyle=MCOL[i];ctx.font='bold 12px Segoe UI';ctx.textAlign='center';ctx.fillText(labels[i],midX,pt+ch+16);ctx.fillStyle='#777';ctx.font='10px Segoe UI';ctx.fillText(fmt(tot),midX,pt+ch+30);
+    if(i>0){const d=tot-totals[i-1],p=((d/totals[i-1])*100).toFixed(1);ctx.fillStyle=d<0?'#ff6090':'#40d090';ctx.font='bold 10px Segoe UI';ctx.textAlign='center';ctx.fillText((d<0?'':'+')+p+'%',midX,pt-10);}
+  });
+  legRow(ctx,h,[[EDIT,'Editorial'],[CREA,'Creative']]);
+}
+
+function drawRatio(id,h2){
+  const r=setup(id,h2); if(!r)return;
+  const {ctx,w,h}=r;
+  const pl=38,pt=20,pb=44,pr=12,cw=w-pl-pr,ch=h-pt-pb;
+  const labels=['Jan','Feb','Mar','Apr','May*'],bw=(cw/5)*0.6,gap=(cw/5)*0.4;
+  [0,25,50,75,100].forEach(p=>{const y=pt+ch-(p/100)*ch;ctx.strokeStyle='#252525';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(pl,y);ctx.lineTo(pl+cw,y);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#555';ctx.font='10px Segoe UI';ctx.textAlign='right';ctx.fillText(p+'%',pl-4,y+4);});
+  totals.forEach((tot,i)=>{
+    const x=pl+i*(cw/5)+gap/2,ep=editorial[i]/tot,cp=creative[i]/tot;
+    let bh2=cp*ch;ctx.fillStyle=CREA+'cc';ctx.beginPath();ctx.roundRect(x,pt+ch-bh2,bw,bh2,[2,2,0,0]);ctx.fill();if(bh2>16){ctx.fillStyle='#fff';ctx.font='bold 11px Segoe UI';ctx.textAlign='center';ctx.fillText((cp*100).toFixed(0)+'%',x+bw/2,pt+ch-bh2/2+4);}
+    let bh=ep*ch;ctx.fillStyle=EDIT+'cc';ctx.beginPath();ctx.roundRect(x,pt+ch-bh2-bh,bw,bh,[2,2,0,0]);ctx.fill();if(bh>16){ctx.fillStyle='#fff';ctx.font='bold 11px Segoe UI';ctx.textAlign='center';ctx.fillText((ep*100).toFixed(0)+'%',x+bw/2,pt+ch-bh2-bh/2+4);}
+    ctx.fillStyle=MCOL[i];ctx.font='bold 11px Segoe UI';ctx.textAlign='center';ctx.fillText(labels[i],x+bw/2,pt+ch+16);
+  });
+  legRow(ctx,h,[[EDIT,'Editorial'],[CREA,'Creative']]);
+}
+
+function drawAvg(id){
+  const r=setup(id,200); if(!r)return;
+  const {ctx,w,h}=r;
+  const pl=46,pt=24,pb=40,pr=12,cw=w-pl-pr,ch=h-pt-pb;
+  grid(ctx,pl,pt,cw,ch,100,5);
+  const bw=(cw/5)*0.6,gap=(cw/5)*0.4;
+  const labels=['Jan','Feb','Mar','Apr','May'];
+  avgDay.forEach((v,i)=>{const x=pl+i*(cw/5)+gap/2,bh=(v/100)*ch;ctx.fillStyle=MCOL[i]+'cc';ctx.beginPath();ctx.roundRect(x,pt+ch-bh,bw,bh,[3,3,0,0]);ctx.fill();ctx.fillStyle='#ddd';ctx.font='bold 11px Segoe UI';ctx.textAlign='center';ctx.fillText(v,x+bw/2,pt+ch-bh-5);ctx.fillStyle='#777';ctx.font='11px Segoe UI';ctx.fillText(labels[i],x+bw/2,pt+ch+16);});
+}
+
+function drawOverviewType(id){
+  const r=setup(id,200); if(!r)return;
+  const {ctx,w,h}=r;
+  const pl=46,pt=24,pb=40,pr=12,cw=w-pl-pr,ch=h-pt-pb;
+  const v=[1531+1618+1279+836+482,801+716+610+450+252,31+13+2+1+2];
+  const labels=['Video','Photos','Illustrations'],cols=['#2563a8','#e8921a','#903290'];
+  const mx=Math.max(...v)*1.15;
+  grid(ctx,pl,pt,cw,ch,mx,5);
+  const bw=(cw/3)*0.6,gap=(cw/3)*0.4;
+  v.forEach((val,i)=>{const x=pl+i*(cw/3)+gap/2,bh=(val/mx)*ch;ctx.fillStyle=cols[i]+'cc';ctx.beginPath();ctx.roundRect(x,pt+ch-bh,bw,bh,[3,3,0,0]);ctx.fill();ctx.fillStyle='#ddd';ctx.font='bold 11px Segoe UI';ctx.textAlign='center';ctx.fillText(fmt(val),x+bw/2,pt+ch-bh-5);ctx.fillStyle=cols[i];ctx.font='bold 11px Segoe UI';ctx.fillText(labels[i],x+bw/2,pt+ch+16);});
+}
+
+function drawCompare(id){
+  const r=setup(id,280); if(!r)return;
+  const {ctx,w,h}=r;
+  const pl=50,pt=34,pb=44,pr=12,cw=w-pl-pr,ch=h-pt-pb;
+  const mx=Math.max(...totals)*1.15,labels=['Jan','Feb','Mar','Apr','May*'];
+  grid(ctx,pl,pt,cw,ch,mx,5);
+  const gw=cw/5,bw=gw*0.3,ig=gw*0.06,p0=gw*0.08;
+  totals.forEach((tot,i)=>{
+    const gx=pl+i*gw+p0;
+    let bh=(editorial[i]/mx)*ch;ctx.fillStyle=EDIT+'cc';ctx.beginPath();ctx.roundRect(gx,pt+ch-bh,bw,bh,[3,3,0,0]);ctx.fill();ctx.fillStyle='#eee';ctx.font='10px Segoe UI';ctx.textAlign='center';ctx.fillText(fmt(editorial[i]),gx+bw/2,pt+ch-bh-4);
+    bh=(creative[i]/mx)*ch;const cx2=gx+bw+ig;ctx.fillStyle=CREA+'cc';ctx.beginPath();ctx.roundRect(cx2,pt+ch-bh,bw,bh,[3,3,0,0]);ctx.fill();ctx.fillStyle='#eee';ctx.font='10px Segoe UI';ctx.textAlign='center';ctx.fillText(fmt(creative[i]),cx2+bw/2,pt+ch-bh-4);
+    const midX=gx+bw+ig/2;ctx.fillStyle=MCOL[i];ctx.font='bold 12px Segoe UI';ctx.textAlign='center';ctx.fillText(labels[i],midX,pt+ch+16);ctx.fillStyle='#777';ctx.font='10px Segoe UI';ctx.fillText(fmt(tot),midX,pt+ch+30);
+    if(i>0){const d=tot-totals[i-1],p=((d/totals[i-1])*100).toFixed(1);ctx.fillStyle=d<0?'#ff6090':'#40d090';ctx.font='bold 10px Segoe UI';ctx.textAlign='center';ctx.fillText((d<0?'+'+'':'')+p+'%',midX,pt-12);}
+  });
+  legRow(ctx,h,[[EDIT,'Editorial'],[CREA,'Creative']]);
+}
+
+function buildOverviewTable(){
+  const list=Object.entries(users).sort((a,b)=>b[1].reduce((x,y)=>x+y,0)-a[1].reduce((x,y)=>x+y,0));
+  const mx=Math.max(...list.map(([,v])=>v.reduce((a,b)=>a+b,0)));
+  let h=`<table><thead><tr><th>#</th><th>User</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May*</th><th>Total</th><th style="width:120px">Bar</th></tr></thead><tbody>`;
+  list.forEach(([u,v],i)=>{const tot=v.reduce((a,b)=>a+b,0),bp=Math.round((tot/mx)*100);h+=`<tr><td class="rank-num">${i+1}</td><td>${u}</td>${v.map(n=>`<td>${fmt(n)}</td>`).join('')}<td><strong>${fmt(tot)}</strong></td><td><div class="bar-bg"><div class="bar-fill" style="width:${bp}%;background:var(--teal)"></div></div></td></tr>`;});
+  document.getElementById('overviewUserTable').innerHTML=h+'</tbody></table>';
+}
+
+function buildCompareTable(){
+  const list=['Ekapol Bunlue','Karin Wasurushtakon','Pawarisa Tangtulanon','Sanicha Lakornphon','Chonlathorn Jarusuwanvong','Kristoffer Svensson'];
+  const dc=(d,b)=>`<span style="color:${d>=0?'#40d090':'#ff6090'}">${d>=0?'+':''}${fmt(d)} (${(b?((d/b)*100):0).toFixed(1)}%)</span>`;
+  let h=`<table><thead><tr><th>User</th><th>Feb</th><th>Mar</th><th>Feb→Mar Δ</th><th>Mar</th><th>Apr</th><th>Mar→Apr Δ</th></tr></thead><tbody>`;
+  list.forEach(u=>{const [,feb,mar,apr]=users[u];h+=`<tr><td><strong>${u}</strong></td><td>${fmt(feb)}</td><td>${fmt(mar)}</td><td>${dc(mar-feb,feb)}</td><td>${fmt(mar)}</td><td>${fmt(apr)}</td><td>${dc(apr-mar,mar)}</td></tr>`;});
+  document.getElementById('compareUserTable').innerHTML=h+'</tbody></table>';
+}
+
+const KEYS=['jan','feb','mar','apr','may'];
+const MON_NAMES=['January','February','March','April','May'];
+const MON_TOTALS=[2364,2349,1893,1287,736];
+const MON_MOM=[null,'ยอดเดือนนี้ลดเพียง 15 ครั้ง (−0.6%) ถือว่าคงที่มากเมื่อเทียบกับเดือนก่อน',
+  'ยอดลดลง 456 ครั้ง (−19.4%) จากกุมภาพันธ์ — ทั้ง Editorial และ Creative ลดพอ ๆ กัน',
+  '⚠️ ยอดลดหนักที่สุดในรอบ 5 เดือน −606 ครั้ง (−32.0%) โดย Sanicha และ Chonlathorn ลดลงมากที่สุด',
+  'ข้อมูล 13 วันแรก — avg/day สูงกว่าเมษายน (56.6 vs 42.9) สัญญาณ recovery ที่น่าจับตา'];
+
+function initAll(){
+  drawOverviewGrouped('chartOverviewGrouped',250);
+  drawRatio('chartOverviewRatio',250);
+  drawAvg('chartAvgDaily');
+  drawOverviewType('chartOverviewType');
+  buildOverviewTable();
+
+  KEYS.forEach((k,i)=>{
+    const cap=k[0].toUpperCase()+k.slice(1);
+    drawDailyStacked('chart'+cap+'Daily',daily[k].edit,daily[k].crea);
+    drawTypeGrouped('chart'+cap+'Type',mtEdit[i],mtCrea[i]);
+    buildInsight('insight'+cap, k, MON_NAMES[i], MON_TOTALS[i], MON_MOM[i]);
+    buildUserTable('table'+cap, k, i);
+  });
+
+  buildCompareTable();
+  drawCompare('chartCompareGrouped');
+}
+
+document.querySelectorAll('.main-tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.main-tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+    setTimeout(initAll,40);
+  });
+});
+window.addEventListener('load',initAll);
+window.addEventListener('resize',()=>setTimeout(initAll,80));
+</script>
+</body>
+</html>
